@@ -59,6 +59,7 @@ module.exports.createArticle = async (req, res) => {
 			title: data.title,
 			description: data.description,
 			body: data.body,
+			matureContent: data.matureContent,
 			UserEmail: user.email,
 		});
 
