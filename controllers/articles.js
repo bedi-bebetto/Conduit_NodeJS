@@ -289,3 +289,33 @@ module.exports.getFeed = async (req, res) => {
 		});
 	}
 };
+
+module.exports.getMatureContentFeed = async (req, res) => {
+	const { limit = 10, offset = 0 } = req.query;
+
+	try {
+		const articles = await Article.findAll({
+			include: [
+				{
+					model: Tag,
+					attributes: ['name'],
+				},
+				{
+					model: User,
+					attributes: ['email', 'username', 'bio', 'image'],
+				},
+			],
+			where: {matureContent: true},
+			order: [['createdAt', 'DESC']],
+			limit: parseInt(limit),
+			offset: parseInt(offset),
+		});
+
+		res.json({ articles });
+	} catch (e) {
+		const code = res.statusCode ? res.statusCode : 422;
+		return res.status(code).json({
+			errors: { body: ['Could not get mature content feed ', e.message] },
+		});
+	}
+};

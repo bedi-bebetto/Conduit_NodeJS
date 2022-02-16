@@ -17,6 +17,9 @@ const Article = sequelize.define('Article',{
     body: { 
       type: DataTypes.TEXT,  
       allowNull: false,
+    },
+    matureContent: {
+        type: DataTypes.BOOLEAN
     }
 })
 
