@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Tag = require('../models/Tag');
 const { slugify } = require('../utils/stringUtil');
 const sequelize = require('../dbConnection');
+const {QueryTypes} = require("sequelize");
 
 function sanitizeOutput(article, user) {
 	const newTagList = [];
@@ -257,31 +258,27 @@ module.exports.getAllArticles = async (req, res) => {
 module.exports.getFeed = async (req, res) => {
 	try {
 		const query = `
-            SELECT UserEmail
-            FROM followers
-            WHERE followerEmail = "${req.user.email}"`;
-		const followingUsers = await sequelize.query(query);
-		if (followingUsers[0].length == 0) {
+            select "UserEmail"
+            from "Followers"
+            where "followerEmail" = '${req.user.email}'`;
+
+		const followingUsers = await sequelize.query(query, {
+			raw: true,
+			type: QueryTypes.SELECT
+		});
+
+		if (!followingUsers.length) {
 			return res.json({ articles: [] });
 		}
-		let followingUserEmail = [];
-		for (let t of followingUsers[0]) {
-			followingUserEmail.push(t.UserEmail);
-		}
 
-		let article = await Article.findAll({
+		let articles = await Article.findAll({
 			where: {
-				UserEmail: followingUserEmail,
+				UserEmail: followingUsers.map(u => u.UserEmail),
 			},
 			include: [Tag, User],
 		});
 
-		let articles = [];
-		for (let t of article) {
-			let addArt = sanitizeOutputMultiple(t);
-			articles.push(addArt);
-		}
-
+		articles = articles.map(article => sanitizeOutputMultiple(article))
 		res.json({ articles });
 	} catch (e) {
 		const code = res.statusCode ? res.statusCode : 422;
